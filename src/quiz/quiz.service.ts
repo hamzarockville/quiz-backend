@@ -15,7 +15,7 @@ export class QuizService {
     @InjectModel(Result.name) private resultModel: Model<Result>,
   ) {
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: '5NoRjFHzVBsqIZw6Fl_cNFLmhtvE5qHQ3qJ2aj40zRtLWJNvPbJ3Y4mv4mSTFB8AE6ZwTHU79RT3BlbkFJecmfZriEx7f4iVvLrV_A_gYpkGQLkxFPGpf9VBcLoQmaOMLEz4ZLMWWFSlfNjWQgwcxLmlIYwA',
     });
   }
 

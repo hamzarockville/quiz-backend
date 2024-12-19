@@ -6,7 +6,7 @@ export class PaymentService {
   private stripe: Stripe;
 
   constructor() {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    this.stripe = new Stripe('sk_test_PNv6tkY9meaWXCsXj6YSFFfm', {
       apiVersion: '2024-11-20.acacia', 
     });
   }
@@ -24,7 +24,7 @@ export class PaymentService {
       return this.stripe.webhooks.constructEvent(
         payload,
         sig,
-        process.env.STRIPE_WEBHOOK_SECRET,
+        'your_stripe_webhook_secret',
       );
     } catch (error) {
       console.error('Webhook verification failed:', error.message);
