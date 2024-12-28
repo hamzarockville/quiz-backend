@@ -180,13 +180,19 @@ export class UserService {
       : plan.price;
 
     user.isSubscribed = true;
+    user.subscriptionPlanId = subscriptionPlanId;
     user.planType = plan.type;
     user.teamAdmin = plan.type === 'team' ? userId : null;
     user.teamId = teamId;
     user.teamSize = plan.type === 'team' ? teamSize : null;
     user.subscriptionPrice = totalPrice;
     user.subscriptionExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-
+    user.paymentMethodId = Math.random().toString(36).substring(2, 8);
+    user.billingHistory.push({
+      invoiceId: Math.random().toString(36).substring(2, 8),
+      amount: totalPrice,
+      date: new Date(),
+    });
     return user.save();
   }
 

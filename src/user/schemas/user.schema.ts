@@ -39,6 +39,13 @@ export class User extends Document {
   @Prop({ required: true, enum: ['admin', 'user'], default: 'user' })
   role: string;
 
+  @Prop({ default: null })
+paymentMethodId?: string; // Stripe Payment Method ID
+
+@Prop({ type: [Object], default: [] })
+billingHistory?: Array<{ invoiceId: string; amount: number; date: Date }>; // Invoice History
+
+
   @Prop({ default: Date.now })
   createdAt: Date;
 }
