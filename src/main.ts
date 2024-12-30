@@ -9,9 +9,9 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     optionsSuccessStatus: 204,
-    credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe());
+  app.getHttpAdapter().getInstance().setTimeout(300000);
   await app.listen(3000);
 }
 bootstrap();
