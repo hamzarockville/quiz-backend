@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
@@ -64,6 +64,33 @@ export class AuthService {
     }
   }
   
-  
+  async updateUserName(userId: string, name: string) {
+    const user = await this.userService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    user.name = name;
+    return user.save();
+  }
+
+  // Update Email
+  async updateUserEmail(userId: string, email: string) {
+    const user = await this.userService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    const existingUser = await this.userService.findByEmail(email);
+    if (existingUser) throw new BadRequestException('Email is already in use');
+    user.email = email;
+    return user.save();
+  }
+
+  // Update Password
+  async updateUserPassword(userId: string, currentPassword: string, newPassword: string) {
+    const user = await this.userService.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isPasswordValid) throw new BadRequestException('Current password is incorrect');
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    return user.save();
+  }
 }
 

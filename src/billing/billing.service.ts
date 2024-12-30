@@ -21,8 +21,10 @@ export class BillingService {
       .findById(userId)
       .populate('subscriptionPlanId')
       .exec();
+      const subscriptionPlan = await this.subscriptionPlanModel.findById(user.subscriptionPlanId);
+      console.log('subscription plan ', subscriptionPlan)
     if (!user) throw new Error('User not found');
-    console.log('user biling found ', user);
+    // console.log('user biling found ', user);
     return {
       subscriptionDetail: {
         currentPlan: user.planType,
@@ -34,6 +36,7 @@ export class BillingService {
       invoices: user.billingHistory,
       isSubscribed: user.isSubscribed,
       subscriptionPlanId: user.subscriptionPlanId,
+      pricePerMember : user.planType === 'team' ? subscriptionPlan.pricePerMember : null
     };
   }
 

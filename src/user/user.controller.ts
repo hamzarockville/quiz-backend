@@ -88,6 +88,22 @@ export class UserController {
     if (!subscriptionDetails) throw new NotFoundException('Subscription details not found');
     return subscriptionDetails;
   }
-
-  
+  @Post(':id/update-plan')
+  async updatePlan(
+    @Param('id') userId: string,
+    @Body() { newPlanId, teamSize  }: { newPlanId: string , teamSize?: number },
+  ) {
+    const updatedUser = await this.userService.updatePlan(userId, newPlanId, teamSize);
+    if (!updatedUser) throw new NotFoundException('User not found or unable to update plan');
+    return { message: 'Plan updated successfully', user: updatedUser };
+  }
+  @Post(':id/add-team-members')
+  async addTeamMembers(
+    @Param('id') userId: string,
+    @Body() { additionalMembers }: { additionalMembers: number },
+  ) {
+    const updatedUser = await this.userService.addTeamMembersSize(userId, additionalMembers);
+    if (!updatedUser) throw new NotFoundException('User not found or unable to add team members');
+    return { message: 'Team size updated successfully', user: updatedUser };
+  }
 }

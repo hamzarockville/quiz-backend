@@ -1,18 +1,30 @@
-import { IsString, IsArray, ArrayMinSize, ValidateNested, IsInt, Min, IsMongoId } from 'class-validator';
+import { IsString, IsArray, ArrayMinSize, ValidateNested, IsInt, Min, IsMongoId, IsOptional, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
-class QuestionDto {
+export class QuestionDto {
   @IsString()
   text: string;
 
   @IsArray()
   @ArrayMinSize(2)
-  @IsString({ each: true })
-  options: string[];
+  @IsOptional()
+  @ValidateIf((question) => question.type === 'mcq')
+  options?: string[];
 
   @IsInt()
-  correctAnswer: number;
+  @IsOptional()
+  @ValidateIf((question) => question.type === 'mcq')
+  correctAnswer: string | number;
+
+  @IsString()
+  @IsOptional()
+  @ValidateIf((question) => question.type === 'q&a')
+  correctAnswerText?: string;
+
+  @IsString()
+  type: 'mcq' | 'q&a'; // New field to distinguish question type
 }
+
 
 export class GenerateQuizDto {
   @IsString()

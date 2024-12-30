@@ -12,13 +12,16 @@ export class QuizController {
   generateQuiz(@Body() generateQuizDto: GenerateQuizDto) {
     return this.quizService.generateQuiz(generateQuizDto);
   }
+  @Post('generate-qna')
+  generateQnaQuiz(@Body() generateQuizDto: GenerateQuizDto) {
+    return this.quizService.generateQnaQuiz(generateQuizDto);
+  }
 
   @UseGuards(JwtAuthGuard)
   @Post('save')
   saveQuiz(@Body() saveQuizDto: SaveQuizDto, @Request() req) {
     return this.quizService.saveQuiz(saveQuizDto, req.user.userId);
   }
-
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Request() req) {
