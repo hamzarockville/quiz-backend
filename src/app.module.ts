@@ -10,6 +10,8 @@ import { SubscriptionModule } from './subscription/subscription.module';
 import { EmailModule } from './email/email.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { BillingModule } from './billing/billing.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { TimeoutInterceptor } from './timeoutInterceptor';
 
 @Module({
   imports: [
@@ -25,6 +27,10 @@ import { BillingModule } from './billing/billing.module';
     DashboardModule,
     BillingModule,
   ],
+  providers: [ {
+    provide: APP_INTERCEPTOR,
+    useClass: TimeoutInterceptor,
+  },],  
 })
 export class AppModule {}
 

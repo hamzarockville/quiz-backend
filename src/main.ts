@@ -23,7 +23,6 @@ async function bootstrap() {
     }
   });
   app.useGlobalPipes(new ValidationPipe());
-  app.getHttpAdapter().getInstance().setTimeout(300000);
   await app.listen(3000);
 }
 bootstrap();
