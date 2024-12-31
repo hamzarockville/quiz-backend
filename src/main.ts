@@ -4,12 +4,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors({
-    origin: ['https://quiz-app-quiz-react-app.eqpf0a.easypanel.host'], // Specify the frontend URL
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  });
+  app.enableCors();
 
   // Handle preflight OPTIONS requests
   app.use((req, res, next) => {
