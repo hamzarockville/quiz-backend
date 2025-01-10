@@ -5,6 +5,7 @@ import { Quiz, Result } from './schemas/quiz.schema';
 import { GenerateQuizDto, SaveQuizDto, SubmitQuizDto } from './dto/create-quiz.dto';
 import { v4 as uuidv4 } from 'uuid';
 import OpenAI from 'openai';
+import { User } from 'src/user/schemas/user.schema';
 
 @Injectable()
 export class QuizService {
@@ -157,6 +158,41 @@ export class QuizService {
   
   async findAll(userId: string): Promise<Quiz[]> {
     return this.quizModel.find({ createdBy: userId }).exec();
+  }
+  async findAllPublic(): Promise<Quiz[]> {
+    // return this.quizModel.find().exec();
+    return this.quizModel.aggregate([
+      {
+        $addFields: {
+          createdByObjectId: { $toObjectId: '$createdBy' }, // Convert `createdBy` to ObjectId
+        },
+      },
+      {
+        $lookup: {
+          from: 'users', // Collection name of the User model
+          localField: 'createdByObjectId', // Use the converted ObjectId field
+          foreignField: '_id', // Field in the User collection
+          as: 'userDetails', // Resulting field
+        },
+      },
+      {
+        $unwind: {
+          path: '$userDetails',
+          preserveNullAndEmptyArrays: true, // Keeps quizzes without users
+        },
+      },
+      {
+        $addFields: {
+          createdByName: '$userDetails.name', // Add user's name to the response
+        },
+      },
+      {
+        $project: {
+          userDetails: 0, // Remove the userDetails field
+          createdByObjectId: 0, // Remove the temporary ObjectId field
+        },
+      },
+    ]);
   }
 
   async findOne(id: string): Promise<Quiz> {

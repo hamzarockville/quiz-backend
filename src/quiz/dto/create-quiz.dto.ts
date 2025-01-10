@@ -41,6 +41,8 @@ export class SaveQuizDto {
 
   @IsString()
   jobArea: string;
+  @IsString()
+  vertical: string;
 
   @IsArray()
   @ArrayMinSize(1)

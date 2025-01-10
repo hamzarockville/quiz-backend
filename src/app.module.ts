@@ -12,6 +12,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { BillingModule } from './billing/billing.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TimeoutInterceptor } from './timeoutInterceptor';
+import { VerticalModule } from './vertical/vertical.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { TimeoutInterceptor } from './timeoutInterceptor';
     EmailModule,
     DashboardModule,
     BillingModule,
+    VerticalModule,
   ],
   providers: [ {
     provide: APP_INTERCEPTOR,

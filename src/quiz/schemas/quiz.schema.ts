@@ -25,6 +25,9 @@ export class Quiz extends Document {
 
   @Prop({ required: true })
   jobArea: string;
+  
+  @Prop({ required: true })
+  vertical: string;
 
   @Prop({ type: [QuestionSchema], required: true }) // Updated to support mixed question types
   questions: Question[];

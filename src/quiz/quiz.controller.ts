@@ -27,7 +27,10 @@ export class QuizController {
   findAll(@Request() req) {
     return this.quizService.findAll(req.user.userId);
   }
-
+ @Get('all')
+  findAllPublic() {
+    return this.quizService.findAllPublic();
+  }
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.quizService.findOne(id);

@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, UpdateResult } from 'mongoose';
 import { User } from './schemas/user.schema';
@@ -9,7 +14,8 @@ import { EmailService } from 'src/email/email.service';
 export class UserService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
-    @InjectModel(SubscriptionPlan.name) private readonly subscriptionPlanModel: Model<SubscriptionPlan>,
+    @InjectModel(SubscriptionPlan.name)
+    private readonly subscriptionPlanModel: Model<SubscriptionPlan>,
     private emailService: EmailService, // Inject EmailService
   ) {}
 
@@ -17,10 +23,53 @@ export class UserService {
     return this.userModel.findById(id).exec();
   }
 
+  // async findAll(): Promise<User[]> {
+  //   return this.userModel.aggregate([
+  //     {
+  //       $addFields: {
+  //         subscriptionPlanObjectId: { $toObjectId: "$subscriptionPlanId" }, // Convert `subscriptionPlanId` to ObjectId
+  //       },
+  //     },
+  //     {
+  //       $lookup: {
+  //         from: 'subscriptionplans',
+  //         localField: 'subscriptionPlanObjectId',
+  //         foreignField: '_id',
+  //         as: 'subcriptionDetails',
+  //       },
+  //     },
+  //     { $unwind: '$subcriptionDetails' },
+  //   ]);
+  // }
+  
   async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+    return this.userModel.aggregate([
+      {
+        $addFields: {
+          subscriptionPlanObjectId: { $toObjectId: "$subscriptionPlanId" }, // Convert `subscriptionPlanId` to ObjectId
+        },
+      },
+      {
+        $lookup: {
+          from: 'subscriptionplans',
+          localField: 'subscriptionPlanObjectId',
+          foreignField: '_id',
+          as: 'subcriptionDetails',
+        },
+      },
+      {
+        $addFields: {
+          subscriptionPlanName: { $arrayElemAt: ['$subcriptionDetails.name', 0] }, // Extract the name field
+        },
+      },
+      {
+        $project: {
+          subcriptionDetails: 0, // Exclude the subcriptionDetails array
+        },
+      },
+    ]);
   }
-
+  
   // async subscribeUser(userId: string, subscriptionPlanId: string, teamSize: number = 1) {
   //   console.log('sub id ', subscriptionPlanId)
   //   const user = await this.userModel.findById(userId);
@@ -33,7 +82,7 @@ export class UserService {
   //     throw new Error('Team size must be at least 1');
   //   }
 
-  //   const totalPrice = plan.type === 'team' 
+  //   const totalPrice = plan.type === 'team'
   //     ? plan.price + plan.pricePerMember * (teamSize - 1)
   //     : plan.price;
 
@@ -48,34 +97,34 @@ export class UserService {
   // async subscribeUser(userId: string, subscriptionPlanId: string, teamSize: number = 1) {
   //   const user = await this.userModel.findById(userId);
   //   if (!user) throw new NotFoundException('User not found');
-  
+
   //   const plan = await this.subscriptionPlanModel.findById(subscriptionPlanId);
   //   if (!plan) throw new NotFoundException('Subscription plan not found');
-  
+
   //   if (plan.type === 'team' && teamSize < 1) {
   //     throw new Error('Team size must be at least 1');
   //   }
-  
+
   //   const totalPrice =
   //     plan.type === 'team'
   //       ? plan.price + plan.pricePerMember * (teamSize - 1)
   //       : plan.price;
-  
+
   //   const teamId = plan.type === 'team' ? userId : null; // Assign the current user's ID as the teamId for the team admin
-  
+
   //   user.isSubscribed = true;
   //   user.planType = plan.type;
   //   user.teamSize = plan.type === 'team' ? teamSize : undefined;
   //   user.subscriptionPrice = totalPrice;
   //   user.subscriptionExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
   //   user.subscriptionPlanId = subscriptionPlanId;
-  
+
   //   // If it's a team plan, set the teamAdmin and teamId
   //   if (plan.type === 'team') {
   //     user.teamAdmin = userId; // The subscribing user becomes the team admin
   //     user.teamId = teamId; // Use the generated teamId
   //   }
-  
+
   //   return user.save();
   // }
   async unsubscribeUser(userId: string) {
@@ -133,7 +182,9 @@ export class UserService {
       throw new Error('User must be subscribed to a team plan to add members');
     }
 
-    const plan = await this.subscriptionPlanModel.findById(user.subscriptionPlanId);
+    const plan = await this.subscriptionPlanModel.findById(
+      user.subscriptionPlanId,
+    );
     if (!plan) throw new Error('Subscription plan not found');
 
     const newTeamSize = (user.teamSize || 1) + additionalMembers;
@@ -160,13 +211,19 @@ export class UserService {
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User | null> {
-    return this.userModel.findByIdAndUpdate(id, { $set: updates }, { new: true }).exec();
+    return this.userModel
+      .findByIdAndUpdate(id, { $set: updates }, { new: true })
+      .exec();
   }
 
   async deleteUser(id: string): Promise<User | null> {
     return this.userModel.findByIdAndDelete(id).exec();
   }
-  async subscribeUser(userId: string, subscriptionPlanId: string, teamSize: number = 1) {
+  async subscribeUser(
+    userId: string,
+    subscriptionPlanId: string,
+    teamSize: number = 1,
+  ) {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('User not found');
 
@@ -175,9 +232,10 @@ export class UserService {
 
     const teamId = plan.type === 'team' ? userId : null;
 
-    const totalPrice = plan.type === 'team'
-      ? plan.price + plan.pricePerMember * (teamSize - 1)
-      : plan.price;
+    const totalPrice =
+      plan.type === 'team'
+        ? plan.price + plan.pricePerMember * (teamSize - 1)
+        : plan.price;
 
     user.isSubscribed = true;
     user.subscriptionPlanId = subscriptionPlanId;
@@ -186,7 +244,9 @@ export class UserService {
     user.teamId = teamId;
     user.teamSize = plan.type === 'team' ? teamSize : null;
     user.subscriptionPrice = totalPrice;
-    user.subscriptionExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    user.subscriptionExpiresAt = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ); // 30 days
     user.paymentMethodId = Math.random().toString(36).substring(2, 8);
     user.billingHistory.push({
       invoiceId: Math.random().toString(36).substring(2, 8),
@@ -244,47 +304,46 @@ export class UserService {
       Your App Team
     `;
 
-    await this.emailService.sendEmail(
-      email,
-      'Welcome to the Team!',
-      emailText,
-    );
+    await this.emailService.sendEmail(email, 'Welcome to the Team!', emailText);
 
     return savedMember;
   }
-  
 
   async removeTeamMember(teamAdminId: string, memberId: string) {
     const teamAdmin = await this.userModel.findById(teamAdminId);
     if (!teamAdmin || teamAdmin.planType !== 'team') {
-      throw new ForbiddenException('User must be a team admin to remove members');
+      throw new ForbiddenException(
+        'User must be a team admin to remove members',
+      );
     }
-  
+
     const member = await this.userModel.findById(memberId);
     if (!member || member.teamAdmin !== teamAdminId) {
       throw new ForbiddenException('Member not part of the team');
     }
-  
+
     // Delete the team member
     await this.userModel.deleteOne({ _id: memberId });
-  
+
     // Increment the team size after removal
     teamAdmin.teamSize += 1;
     await teamAdmin.save();
   }
 
   async getTeam(teamAdminId: string) {
-    const teamMembers = await this.userModel.find({ teamAdmin: teamAdminId }).exec();
+    const teamMembers = await this.userModel
+      .find({ teamAdmin: teamAdminId })
+      .exec();
     return teamMembers;
   }
 
   // async updatePlan(userId: string, newPlanId: string, teamSize?: number): Promise<User> {
   //   const user = await this.userModel.findById(userId);
   //   if (!user) throw new NotFoundException('User not found');
-  
+
   //   const newPlan = await this.subscriptionPlanModel.findById(newPlanId);
   //   if (!newPlan) throw new NotFoundException('Subscription plan not found');
-  
+
   //   // Handle team plan logic
   //   if (newPlan.type === 'team') {
   //     if (!teamSize || teamSize < 1) {
@@ -297,27 +356,32 @@ export class UserService {
   //     user.teamSize = 1; // Reset team size for individual plans
   //     user.subscriptionPrice = newPlan.price;
   //   }
-  
+
   //   user.planType = newPlan.type;
   //   user.subscriptionPlanId = newPlanId;
-  
+
   //   await user.save();
   //   return  user
- 
+
   // }
-  async updatePlan(userId: string, newPlanId: string, teamSize: number = 1): Promise<User> {
+  async updatePlan(
+    userId: string,
+    newPlanId: string,
+    teamSize: number = 1,
+  ): Promise<User> {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('User not found');
-  
+
     const newPlan = await this.subscriptionPlanModel.findById(newPlanId);
     if (!newPlan) throw new NotFoundException('Subscription plan not found');
-  
+
     const teamId = newPlan.type === 'team' ? user.teamId || userId : null;
-  
-    const totalPrice = newPlan.type === 'team'
-      ? newPlan.price + (newPlan.pricePerMember || 0) * (teamSize - 1)
-      : newPlan.price;
-  
+
+    const totalPrice =
+      newPlan.type === 'team'
+        ? newPlan.price + (newPlan.pricePerMember || 0) * (teamSize - 1)
+        : newPlan.price;
+
     // Update user subscription details
     user.isSubscribed = true;
     user.subscriptionPlanId = newPlanId;
@@ -326,34 +390,42 @@ export class UserService {
     user.teamId = teamId;
     user.teamSize = newPlan.type === 'team' ? teamSize : null;
     user.subscriptionPrice = totalPrice;
-    user.subscriptionExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // Reset subscription for 30 days
-  
+    user.subscriptionExpiresAt = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+    ); // Reset subscription for 30 days
+
     // Add billing entry
     user.billingHistory.push({
       invoiceId: Math.random().toString(36).substring(2, 8),
       amount: totalPrice,
       date: new Date(),
     });
-  
+
     return user.save();
   }
-  
-  async addTeamMembersSize(userId: string, additionalMembers: number): Promise<User> {
+
+  async addTeamMembersSize(
+    userId: string,
+    additionalMembers: number,
+  ): Promise<User> {
     const user = await this.userModel.findById(userId);
-  if (!user || user.planType !== 'team') {
-    throw new NotFoundException('User not found or not on a team plan');
+    if (!user || user.planType !== 'team') {
+      throw new NotFoundException('User not found or not on a team plan');
+    }
+
+    const currentPlan = await this.subscriptionPlanModel.findById(
+      user.subscriptionPlanId,
+    );
+    if (!currentPlan || !currentPlan.pricePerMember) {
+      throw new NotFoundException(
+        'Current subscription plan not valid for team members',
+      );
+    }
+
+    user.teamSize += additionalMembers;
+    user.subscriptionPrice += additionalMembers * currentPlan.pricePerMember;
+
+    await user.save();
+    return user;
   }
-
-  const currentPlan = await this.subscriptionPlanModel.findById(user.subscriptionPlanId);
-  if (!currentPlan || !currentPlan.pricePerMember) {
-    throw new NotFoundException('Current subscription plan not valid for team members');
-  }
-
-  user.teamSize += additionalMembers;
-  user.subscriptionPrice += additionalMembers * currentPlan.pricePerMember;
-
-  await user.save();
-  return user 
-
-}
 }
